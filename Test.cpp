@@ -103,3 +103,42 @@ TEST_CASE("ByteBuffer::compact", "[compact]")
     REQUIRE(bb.limit() == bb.capacity());
     REQUIRE(bb.position() == 3);
 }
+
+TEST_CASE("ByteBuffer::duplicate", "[duplicate]")
+{
+    ByteBuffer bb;
+    bb.putChar('a');
+    ByteBuffer *bb1 = bb.duplicate();
+    REQUIRE(bb.equals(bb1));
+    bb1->putChar('b');
+    // The two buffers' position, limit values will be independent.
+    REQUIRE(bb1->position() == 2);
+    REQUIRE(bb1->limit() == 2048);
+    REQUIRE(bb.position() == 1);
+    REQUIRE(bb.limit() == 2048);
+    // Changes to new buffer's content will be visible in the old buffer.
+    REQUIRE(bb.getChar(1) == bb1->getChar(1));
+}
+
+TEST_CASE("ByteBuffer::slice", "[slice]")
+{
+    ByteBuffer bb;
+    bb.putBytes((uint8_t*)"hello", 5);
+    REQUIRE(bb.position() == 5);
+    REQUIRE(bb.limit() == 2048);
+    bb.position(2);
+    bb.limit(3);
+    REQUIRE(bb.position() == 2);
+    REQUIRE(bb.limit() == 3);
+
+    // The two buffers' position, limit values will be independent.
+    ByteBuffer *bb1 = bb.slice();
+    REQUIRE(bb1->position() == 0);
+    REQUIRE(bb1->limit() == 1);
+    REQUIRE(bb1->getChar(0) == 'l');
+
+    // Changes to new buffer's content will be visible in the old buffer.
+    bb1->put((uint8_t)'w', static_cast<uint32_t>(0));
+    REQUIRE(bb1->get(0) == 'w');
+    REQUIRE(bb.get(2) == 'w');
+}

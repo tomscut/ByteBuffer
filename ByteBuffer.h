@@ -242,15 +242,23 @@ public:
     {
         ByteBuffer* newBuffer = new ByteBuffer(capacity_);
 
-        // copy data
-        newBuffer->put(this);
+        newBuffer->p_buffer_ = this->p_buffer_;
 
         newBuffer->limit(limit_);
         newBuffer->position(position_);
 
         return newBuffer;
     }
+    ByteBuffer *slice() {
+        ByteBuffer *newBuffer = new ByteBuffer(remaining());
 
+        newBuffer->p_buffer_ = this->p_buffer_ + position_;
+
+        newBuffer->limit(remaining());
+        newBuffer->position(0);
+
+        return newBuffer;
+    }
     ByteBuffer& clear()
     {
         position_ = 0;
@@ -343,12 +351,15 @@ public:
         if (mark_ > newLimit)
             mark_ = -1;
 
+        limit_ = newLimit;
+
         return *this;
     }
 
     ByteBuffer& position(uint32_t newPosition)
     {
         position_ = newPosition;
+        return *this;
     }
 
     void printInfo() const
